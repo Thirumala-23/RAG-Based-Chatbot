@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AskVerse — Enterprise Engineering Knowledge Assistant</title>
+    <meta name="description" content="Access engineering knowledge instantly from technical manuals, SOPs, and manufacturing documents.">
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX math formatting CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <link rel="stylesheet" href="/static/css/style.css?v=2.4.0">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                        <polygon points="12 2 22 8.5 22 19.5 12 22 2 19.5 2 8.5"></polygon>
+                        <polyline points="12 22 12 12 22 8.5"></polyline>
+                        <polyline points="12 12 2 8.5"></polyline>
+                        <circle cx="12" cy="12" r="3.5" fill="currentColor" fill-opacity="0.15"></circle>
+                    </svg>
+                    <span>AskVerse</span>
+                </div>
+                <button type="button" id="newChatBtn" class="new-chat-btn" title="Start New Chat Context">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Chat</span>
+                </button>
+            </div>
+
+            <!-- Upload Container -->
+            <div class="upload-section">
+                <h3>Active Document</h3>
+                
+                <!-- No Active PDF Placeholder -->
+                <div class="active-file-empty" id="fileEmpty">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>No active document</span>
+                </div>
+
+                <!-- Active PDF Info -->
+                <div class="active-file-card hidden" id="fileCard">
+                    <div class="file-card-header">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <div class="file-details">
+                            <span class="file-name clickable-filename" id="fileName" title="Click to view PDF in new tab">report.pdf</span>
+                            <span class="file-meta" id="fileMeta">24 pages • 2.4 MB</span>
+                        </div>
+                    </div>
+                    <div class="file-card-actions">
+                        <button class="btn btn-danger" id="clearFileBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Clear Active
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF History Section -->
+            <div class="history-section">
+                <h3>Uploaded PDFs History</h3>
+                <div class="history-list" id="historyList">
+                    <div class="history-empty">No upload history yet.</div>
+                </div>
+            </div>
+
+            <!-- Settings / API Configuration -->
+            <div class="settings-section">
+                <a href="/logout" class="settings-btn" id="logoutBtn" style="text-decoration: none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout ({{ session.get('username', 'User') }})
+                </a>
+            </div>
+        </aside>
+
+        <!-- Sidebar overlay backdrop for high-zoom / drawer mode -->
+        <div class="sidebar-overlay hidden" id="sidebarOverlay"></div>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <div class="header-left-group">
+                    <button type="button" id="sidebarToggleBtn" class="sidebar-toggle-btn" title="Toggle History Sidebar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="active-pdf-title">
+                        <span class="label">Conversing with:</span>
+                        <span class="value clickable-filename" id="headerFilename" title="Click to view PDF in new tab">No PDF Selected</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <select id="modelSelector" class="model-selector" title="Select Local Model">
+                        <option value="">Loading local models...</option>
+                    </select>
+                    
+                    <button type="button" class="header-action-btn" id="shareBtn" title="Share Conversation Link">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                    </button>
+                    
+                    <!-- Premium Theme Dropdown Toggle Menu -->
+                    <div class="theme-menu-container">
+                        <button class="header-action-btn" id="themeToggleBtn" title="Switch Theme">
+                            <!-- Icon gets dynamically injected by JS, default to dark/moon -->
+                            <svg class="theme-icon-active" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
+                        <div class="theme-dropdown-menu hidden" id="themeDropdownMenu">
+                            <button class="theme-menu-item" data-theme="dark">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                                <span>Dark Theme</span>
+                            </button>
+                            <button class="theme-menu-item" data-theme="light">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                <span>Light Theme</span>
+                            </button>
+                            <button class="theme-menu-item" data-theme="system">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                <span>System Default</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat Message Feed -->
+            <div class="messages-container" id="messagesContainer">
+                <!-- Welcome Dashboard -->
+                <div class="welcome-dashboard">
+                    <div class="dashboard-header">
+                        <!-- Custom Centered 3D Isometric AskVerse Logo with soft blue background -->
+                        <div class="dashboard-logo-icon" style="background: rgba(37, 99, 235, 0.08); border-radius: 16px; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto; border: 1px solid rgba(37, 99, 235, 0.15); box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);">
+                            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                                <polygon points="12 2 22 8.5 22 19.5 12 22 2 19.5 2 8.5"></polygon>
+                                <polyline points="12 22 12 12 22 8.5"></polyline>
+                                <polyline points="12 12 2 8.5"></polyline>
+                                <circle cx="12" cy="12" r="3.5" fill="currentColor" fill-opacity="0.15"></circle>
+                            </svg>
+                        </div>
+                        <!-- Centered Brand Title -->
+                        <div class="dashboard-brand" style="font-family: 'Outfit', sans-serif; font-size: 2.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem; letter-spacing: -0.03em; text-align: center;">
+                            Ask<span style="color: #2563EB;">Verse</span>
+                        </div>
+                        <h1 class="dashboard-title"><span id="greetingText">Hello</span>, <span class="username-highlight">{{ session.get('username', 'Workstation User') }}</span></h1>
+                        <p class="dashboard-subtitle">Transform engineering manuals, SOPs, and technical documents into instant answers.</p>
+                    </div>
+                    
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card" id="cardUpload">
+                            <div class="card-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="card-details">
+                                <h3>Upload New Manual</h3>
+                                <p>Ingest textbooks or machinery directories up to 500MB instantly.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card card-actionable" data-prompt="Can you give me a concise executive summary of this document?">
+                            <div class="card-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="card-details">
+                                <h3>Summarize Document</h3>
+                                <p>Generate a high-level conceptual outline of active chapters.</p>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card card-actionable" data-prompt="Find the most important formulas, calculations, or specifications mentioned in this document.">
+                            <div class="card-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </div>
+                            <div class="card-details">
+                                <h3>Locate Key Formulas</h3>
+                                <p>Search exact technical equations, specifications, or diagrams.</p>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card" id="cardVoice">
+                            <div class="card-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </div>
+                            <div class="card-details">
+                                <h3>Hands-free Dictation</h3>
+                                <p>Click the microphone icon in the chat bar to speak queries.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input Area -->
+            <footer class="chat-input-section">
+                <form id="chatForm" class="chat-form">
+                    <button type="button" id="uploadBtn" class="upload-btn" title="Upload PDF (up to 500MB)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                    <input type="text" id="userInput" placeholder="Upload a PDF using '+' or select one..." autocomplete="off" disabled>
+                    <button type="button" id="micBtn" class="mic-btn" disabled title="Voice Input (Speech-to-Text)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+                    <button type="submit" id="sendBtn" class="send-btn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </footer>
+        </main>
+    </div>
+
+
+
+    <!-- Ollama Diagnostics & Settings Modal -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Ollama Local Configuration</h2>
+                <button type="button" class="modal-close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>AskVerse runs securely on your enterprise workstation. It connects to your enterprise LLM or local Ollama engine at <strong>http://127.0.0.1:11434</strong>.</p>
+                
+                <div class="form-group" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                    <label>Inference Status Check</label>
+                    <button type="button" class="btn btn-primary" id="testApiKeyBtn" style="width: 100%; font-weight: 600; padding: 0.55rem;">
+                        Refresh Workstation
+                    </button>
+                </div>
+                
+                <!-- Diagnostic Area -->
+                <div class="diagnostic-panel" id="diagnosticArea" style="background-color: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem; font-size: 0.8rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <span class="status-dot red" id="diagnosticStatusDot"></span>
+                        <strong id="diagnosticStatusText">Diagnostics Idle</strong>
+                    </div>
+                    <div id="diagnosticDetails" style="color: var(--text-secondary); line-height: 1.45; font-family: var(--font-sans);">
+                        Click 'Refresh Workstation' to check connected models and connection logs.
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Close</button>
+                <button type="button" class="btn btn-primary" id="saveSettingsBtn">Save & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium ChatGPT-Style Share Modal -->
+    <div class="modal-overlay hidden" id="shareModal">
+        <div class="modal-content" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Share Chat Workspace</h2>
+                <button type="button" class="modal-close-btn" id="closeShareBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+                    Share access to the current PDF conversation workspace. Anyone with the link will be able to review the document and chat history.
+                </p>
+                
+                <div style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.6rem;">
+                    Share to social channels
+                </div>
+                
+                <div class="share-channels-grid">
+                    <!-- WhatsApp -->
+                    <a href="#" id="shareWhatsapp" class="share-channel-btn whatsapp-btn" target="_blank">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    
+                    <!-- LinkedIn -->
+                    <a href="#" id="shareLinkedin" class="share-channel-btn linkedin-btn" target="_blank">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                            <rect x="2" y="9" width="4" height="12"></rect>
+                            <circle cx="4" cy="4" r="2"></circle>
+                        </svg>
+                        <span>LinkedIn</span>
+                    </a>
+                    
+                    <!-- X (Twitter) -->
+                    <a href="#" id="shareTwitter" class="share-channel-btn twitter-btn" target="_blank">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                        </svg>
+                        <span>X / Twitter</span>
+                    </a>
+                </div>
+                
+                <div style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-top: 1.5rem; margin-bottom: 0.6rem;">
+                    Or copy workspace link
+                </div>
+                
+                <div class="share-link-input-wrapper">
+                    <input type="text" class="share-link-input" id="shareLinkInput" readonly>
+                    <button class="btn btn-primary btn-copy-link" id="copyShareLinkBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toasts container for premium alerts -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/app.js?v=2.4.0"></script>
+</body>
+</html>

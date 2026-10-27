@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+.venv_linux
+__pycache__
+*.db
+*.log
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/.env.local
+uploads
+storage
+*.png
+*.jpg
+*.md

@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+uploads/
+*.pdf
+.DS_Store
+chatbot.db
+*.db

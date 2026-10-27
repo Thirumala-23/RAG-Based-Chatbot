@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — AskVerse</title>
+    <meta name="description" content="Transform engineering manuals, SOPs, maintenance records, and technical documents into instant answers using AI-powered document intelligence.">
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-app: #0F172A;
+            --bg-card: rgba(255, 255, 255, 0.96);
+            --color-primary: #2563EB;
+            --color-secondary: #4338CA;
+            --color-accent: #60A5FA;
+            --text-main: #0F172A;
+            --text-sub: #334155;
+            --text-label: #64748B;
+            --border-color: rgba(226, 232, 240, 0.8);
+            --shadow-soft: 0 20px 40px rgba(0, 0, 0, 0.35);
+            --transition-speed: 0.5s;
+
+            /* Spotlight glow color properties */
+            --glow-color-1: rgba(99, 102, 241, 0.15); /* Indigo */
+            --glow-color-2: rgba(59, 130, 246, 0.08); /* Blue */
+            --dot-color: rgba(255, 255, 255, 0.35);    /* White dots for dark mode */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-app);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.5) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(67, 56, 202, 0.5) 0px, transparent 50%);
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #FFFFFF;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                var(--glow-color-1),
+                var(--glow-color-2) 40%,
+                transparent 70%
+            );
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1.5px);
+            background-size: 32px 32px;
+            -webkit-mask-image: radial-gradient(
+                250px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0.3) 50%,
+                transparent 100%
+            );
+            mask-image: radial-gradient(
+                250px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0.3) 50%,
+                transparent 100%
+            );
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .auth-card {
+            position: relative;
+            width: 100%;
+            height: 640px;
+            background: #0B0F19;
+            border-radius: 25px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Floating Particles Background */
+        .particle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.15);
+            animation: float 10s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) { width: 90px; height: 90px; left: -20px; top: 10%; animation-duration: 12s; }
+        .particle:nth-child(2) { width: 130px; height: 130px; right: -30px; top: 30%; animation-duration: 16s; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 70px; height: 70px; left: 30%; bottom: 15%; animation-duration: 9s; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.15; }
+            50% { transform: translateY(-30px) scale(1.1) rotate(180deg); opacity: 0.35; }
+        }
+
+        /* Dark Background Panel (Host of Sign Up & Branding Content) */
+        .dark-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #4338CA 100%);
+            padding: 2.25rem 2.25rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        .dark-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                250px circle at var(--mouse-x-panel, 50%) var(--mouse-y-panel, 50%),
+                rgba(99, 102, 241, 0.25),
+                transparent 70%
+            );
+            pointer-events: none;
+            mix-blend-mode: screen;
+            z-index: 3;
+        }
+
+        /* Network Lines overlay */
+        .dark-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(rgba(96, 165, 250, 0.1) 1.5px, transparent 1.5px),
+                radial-gradient(rgba(96, 165, 250, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px, 12px 12px;
+            background-position: 0 0, 6px 6px;
+            opacity: 0.85;
+            pointer-events: none;
+        }
+
+        .dark-header {
+            text-align: center;
+            margin-bottom: 0.75rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        .auth-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-bottom: 0.3rem;
+        }
+
+        .auth-logo svg {
+            color: var(--color-accent);
+            filter: drop-shadow(0 2px 8px rgba(96, 165, 250, 0.4));
+        }
+
+        .auth-tagline {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--color-accent);
+        }
+
+        /* Sign Up content container */
+        .signup-content {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed) ease-in-out, transform var(--transition-speed) ease-in-out;
+            transform: translateY(15px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        body.signup-mode .signup-content {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .branding-pitch {
+            font-size: 0.78rem;
+            line-height: 1.45;
+            color: #E2E8F0;
+            text-align: center;
+            opacity: 0.9;
+            max-width: 320px;
+            margin: 0 auto 0.25rem auto;
+        }
+
+        /* Glass Panel (Login) */
+        .glass-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 78%; /* 500px */
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px 35px 0 0;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+            z-index: 10;
+            padding: 2.75rem 2.25rem;
+            transition: transform var(--transition-speed) ease-in-out;
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        body.signup-mode .glass-panel {
+            transform: translateY(calc(100% - 68px)); /* Collapses to curved footer tab */
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Clickable bottom tab button when collapsed */
+        .collapsed-tab-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, background-color 0.2s;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            letter-spacing: 0.02em;
+            border-radius: 35px 35px 0 0;
+        }
+
+        .collapsed-tab-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body.signup-mode .collapsed-tab-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .login-content {
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity var(--transition-speed) ease-in-out, transform var(--transition-speed) ease-in-out;
+            transform: translateY(0);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            color: var(--text-main);
+        }
+
+        body.signup-mode .login-content {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(15px);
+        }
+
+        .form-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Compact form elements for Sign Up so they fit beautifully */
+        .dark-theme-form {
+            gap: 0.75rem;
+        }
+
+        .form-group-auth {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .form-group-auth label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-sub);
+        }
+
+        .dark-theme-form label {
+            color: #94A3B8;
+        }
+
+        .form-input-auth {
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.7rem 0.95rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+            width: 100%;
+        }
+
+        .form-input-auth:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            background-color: #FFFFFF;
+        }
+
+        /* Dark Form inputs */
+        .dark-input {
+            background-color: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            padding: 0.6rem 0.85rem;
+        }
+
+        .dark-input::placeholder {
+            color: #64748B;
+        }
+
+        .dark-input:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+
+        /* Password visibility wrapper */
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-label);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            transition: color 0.2s;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--color-primary);
+        }
+
+        .dark-theme-form .password-toggle-btn {
+            color: #94A3B8;
+        }
+
+        .dark-theme-form .password-toggle-btn:hover {
+            color: var(--color-accent);
+        }
+
+        /* Password side-by-side container for register */
+        .password-row-register {
+            display: flex;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .password-row-register .form-group-auth {
+            flex: 1;
+        }
+
+        /* Form Options row */
+        .form-options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-top: 0.1rem;
+        }
+
+        .remember-me-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-me-checkbox input {
+            cursor: pointer;
+            accent-color: var(--color-primary);
+        }
+
+        .forgot-password-link {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .forgot-password-link:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+
+        /* Submit buttons */
+        .btn-auth-submit {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            outline: none;
+            width: 100%;
+            margin-top: 0.25rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-auth-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-auth-submit:active {
+            transform: scale(0.99);
+        }
+
+        .accent-btn {
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+            margin-top: 0.15rem;
+        }
+
+        .accent-btn:hover {
+            box-shadow: 0 6px 16px rgba(96, 165, 250, 0.3);
+        }
+
+        /* Link rows */
+        .toggle-link-row {
+            margin-top: 1.25rem;
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-sub);
+        }
+
+        .toggle-mode-link {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 700;
+            margin-left: 0.35rem;
+            transition: color 0.2s;
+        }
+
+        .toggle-mode-link:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+
+        .signup-toggle-link-row {
+            margin-top: 0.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94A3B8;
+            position: relative;
+            z-index: 5;
+        }
+
+        .signup-toggle-link-row a {
+            color: var(--color-accent);
+            text-decoration: none;
+            font-weight: 700;
+            margin-left: 0.35rem;
+            transition: color 0.2s;
+        }
+
+        .signup-toggle-link-row a:hover {
+            text-decoration: underline;
+        }
+
+        /* Toast Alert Panel */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: #FFFFFF;
+            border-left: 4px solid var(--color-primary);
+            color: var(--text-main);
+            padding: 1rem 1.25rem;
+            border-radius: 6px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            font-size: 0.82rem;
+            font-weight: 600;
+            min-width: 280px;
+            opacity: 1;
+            transition: opacity 0.3s, transform 0.3s;
+            animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .toast.success { border-left-color: #10B981; }
+        .toast.error { border-left-color: #EF4444; }
+
+        @keyframes toastSlideIn {
+            from { transform: translateY(15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .workstation-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #64748B;
+            letter-spacing: 0.04em;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card" id="authCard">
+            <!-- Dark Background Panel (Host of Sign Up & Branding Content) -->
+            <div class="dark-panel">
+                <!-- Floating Animated Particles -->
+                <div class="particle-container">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                </div>
+
+                <!-- Always-visible header -->
+                <div class="dark-header">
+                    <div class="auth-logo">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 22 8.5 22 19.5 12 22 2 19.5 2 8.5"></polygon>
+                            <polyline points="12 22 12 12 22 8.5"></polyline>
+                            <polyline points="12 12 2 8.5"></polyline>
+                            <circle cx="12" cy="12" r="3.5" fill="currentColor" fill-opacity="0.15"></circle>
+                        </svg>
+                        <span>AskVerse</span>
+                    </div>
+                </div>
+
+                <!-- Sign Up Form (Revealed in Sign Up Mode) -->
+                <div class="signup-content" id="signupContent">
+                    <p class="branding-pitch">
+                        Transform engineering manuals, SOPs, maintenance records, and technical documents into instant answers using AI-powered document intelligence.
+                    </p>
+
+                    <form id="registerForm" class="auth-form dark-theme-form">
+                        <div class="form-group-auth">
+                            <label for="registerFullName">Full Name</label>
+                            <input type="text" id="registerFullName" placeholder="John Doe" class="form-input-auth dark-input" required autocomplete="name">
+                        </div>
+
+                        <div class="form-group-auth">
+                            <label for="registerEmployeeId">Employee ID</label>
+                            <input type="text" id="registerEmployeeId" placeholder="EMP-1234" class="form-input-auth dark-input" required autocomplete="username">
+                        </div>
+
+                        <div class="form-group-auth">
+                            <label for="registerEmail">Email Address</label>
+                            <input type="email" id="registerEmail" placeholder="name@company.com" class="form-input-auth dark-input" required autocomplete="email">
+                        </div>
+
+                        <!-- Side-by-side Passwords to fit layout perfectly -->
+                        <div class="password-row-register">
+                            <div class="form-group-auth">
+                                <label for="registerPassword">Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="registerPassword" placeholder="Password" class="form-input-auth dark-input" required autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" tabindex="-1">
+                                        <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group-auth">
+                                <label for="registerConfirmPassword">Confirm Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="registerConfirmPassword" placeholder="Confirm" class="form-input-auth dark-input" required autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" tabindex="-1">
+                                        <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-auth-submit accent-btn" id="registerSubmitBtn">
+                            <span>Create Account</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div class="signup-toggle-link-row">
+                        <span>Already have an account?</span>
+                        <a href="#" id="switchToSignInLink">Login</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sliding White Glassmorphic Panel (Host of Login Form) -->
+            <div class="glass-panel" id="glassPanel">
+                <!-- Collapsed panel toggle (Arch shape showing Login trigger at bottom) -->
+                <div class="collapsed-tab-btn" id="collapsedSignInBtn">
+                    <span>Sign In</span>
+                </div>
+
+                <div class="login-content" id="loginContent">
+                    <form id="loginForm" class="auth-form" autocomplete="off">
+                        <h2 class="form-title">Login</h2>
+
+                        <div class="form-group-auth">
+                            <label for="loginUsername">Employee ID / Email</label>
+                            <input type="text" id="loginUsername" placeholder="name@company.com" class="form-input-auth" required autocomplete="off">
+                        </div>
+
+                        <div class="form-group-auth">
+                            <label for="loginPassword">Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="loginPassword" placeholder="Enter secure password" class="form-input-auth" required autocomplete="new-password">
+                                <button type="button" class="password-toggle-btn" tabindex="-1">
+                                    <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Remember Me & Forgot Password Row -->
+                        <div class="form-options-row">
+                            <label class="remember-me-checkbox">
+                                <input type="checkbox" id="rememberMe">
+                                <span>Remember Me</span>
+                            </label>
+                            <a href="#" class="forgot-password-link" id="forgotPasswordBtn">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">
+                            <span>Sign In</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+
+                        <div class="toggle-link-row">
+                            <span>Don't have an account?</span>
+                            <a href="#" class="toggle-mode-link" id="switchToSignUp">Sign Up</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="workstation-footer">
+            © 2026 AskVerse
+        </div>
+    </div>
+
+    <!-- Custom Toasts container for premium alerts -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authCard = document.getElementById('authCard');
+            const glassPanel = document.getElementById('glassPanel');
+            const collapsedSignInBtn = document.getElementById('collapsedSignInBtn');
+            const switchToSignUpLink = document.getElementById('switchToSignUp');
+            const switchToSignInLink = document.getElementById('switchToSignInLink');
+
+            const loginForm = document.getElementById('loginForm');
+            const loginUsernameInput = document.getElementById('loginUsername');
+            const loginPasswordInput = document.getElementById('loginPassword');
+            const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+
+            const registerForm = document.getElementById('registerForm');
+            const registerFullNameInput = document.getElementById('registerFullName');
+            const registerEmployeeIdInput = document.getElementById('registerEmployeeId');
+            const registerEmailInput = document.getElementById('registerEmail');
+            const registerPasswordInput = document.getElementById('registerPassword');
+            const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
+            const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+
+            const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+            const toastContainer = document.getElementById('toastContainer');
+
+            // --- Toggle between Login and Signup (Sliding window curvature panels) ---
+            const enableSignUpMode = () => {
+                document.body.classList.add('signup-mode');
+            };
+
+            const disableSignUpMode = () => {
+                document.body.classList.remove('signup-mode');
+            };
+
+            // Toggle triggers
+            switchToSignUpLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                enableSignUpMode();
+            });
+
+            switchToSignInLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                disableSignUpMode();
+            });
+
+            collapsedSignInBtn.addEventListener('click', () => {
+                disableSignUpMode();
+            });
+
+            // --- Password Visibility Toggles ---
+            const passwordWrappers = document.querySelectorAll('.password-input-wrapper');
+            passwordWrappers.forEach(wrapper => {
+                const input = wrapper.querySelector('input');
+                const btn = wrapper.querySelector('.password-toggle-btn');
+                
+                btn.addEventListener('click', () => {
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    
+                    // Modify eye icon to have a slash when text is visible
+                    if (isPassword) {
+                        btn.innerHTML = `
+                            <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        `;
+                    } else {
+                        btn.innerHTML = `
+                            <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        `;
+                    }
+                });
+            });
+
+            // --- Forgot Password Trigger ---
+            if (forgotPasswordBtn) {
+                forgotPasswordBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showToast('Please contact your company IT administrator to reset your employee workstation password.', 'info');
+                });
+            }
+
+            // --- Form Submissions (Login) ---
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = loginUsernameInput.value.trim();
+                const password = loginPasswordInput.value.trim();
+
+                if (!username || !password) {
+                    showToast('Please fill in all credentials.', 'error');
+                    return;
+                }
+
+                loginSubmitBtn.disabled = true;
+                const originalText = loginSubmitBtn.querySelector('span').textContent;
+                loginSubmitBtn.querySelector('span').textContent = 'Signing in...';
+
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showToast(data.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 800);
+                    } else {
+                        throw new Error(data.error || 'Authentication failed.');
+                    }
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    loginSubmitBtn.disabled = false;
+                    loginSubmitBtn.querySelector('span').textContent = originalText;
+                }
+            });
+
+            // --- Form Submissions (Register) ---
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fullName = registerFullNameInput.value.trim();
+                const employeeId = registerEmployeeIdInput.value.trim();
+                const email = registerEmailInput.value.trim();
+                const password = registerPasswordInput.value.trim();
+                const confirmPassword = registerConfirmPasswordInput.value.trim();
+
+                if (!fullName || !employeeId || !email || !password || !confirmPassword) {
+                    showToast('Please fill in all registration fields.', 'error');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showToast('Passwords do not match.', 'error');
+                    return;
+                }
+
+                registerSubmitBtn.disabled = true;
+                const originalText = registerSubmitBtn.querySelector('span').textContent;
+                registerSubmitBtn.querySelector('span').textContent = 'Creating account...';
+
+                try {
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: employeeId, password: password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showToast(data.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 800);
+                    } else {
+                        throw new Error(data.error || 'Registration failed.');
+                    }
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    registerSubmitBtn.disabled = false;
+                    registerSubmitBtn.querySelector('span').textContent = originalText;
+                }
+            });
+
+            // --- Toast helper ---
+            function showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(10px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+
+            // Force clear browser saved autofill on page load
+            window.addEventListener('pageshow', () => {
+                setTimeout(() => {
+                    if (loginUsernameInput) loginUsernameInput.value = '';
+                    if (loginPasswordInput) loginPasswordInput.value = '';
+                }, 100);
+            });
+
+            // --- Interactive Spotlight Glow ---
+            const darkPanel = document.querySelector('.dark-panel');
+            document.addEventListener('mousemove', (e) => {
+                document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+                document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+                
+                if (darkPanel) {
+                    const rect = darkPanel.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    darkPanel.style.setProperty('--mouse-x-panel', `${x}px`);
+                    darkPanel.style.setProperty('--mouse-y-panel', `${y}px`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
